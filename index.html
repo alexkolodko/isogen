@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Генератор ізохрон</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <div id="panel">
+    <div class="panel-header">
+      <h2>Ізохрони</h2>
+      <button id="btn-dark" class="icon-btn" title="Темна тема">🌙</button>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Режим руху</label>
+      <select id="travel-mode">
+        <option value="walk">🚶 Пішки</option>
+        <option value="drive">🚗 Авто</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">
+        Максимальний час
+        <span id="max-time-label" class="value-badge">5 хв</span>
+      </label>
+      <input id="max-time" type="range" min="5" max="60" value="5" step="5">
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Відображення</label>
+      <div class="toggle-group">
+        <button id="btn-streets" class="toggle-btn">Вулиці</button>
+        <button id="btn-isochrone" class="toggle-btn active">Ізохрона</button>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Фон палітри</label>
+      <select id="color-background">
+        <option value="light">Світлий</option>
+        <option value="dark">Темний</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label">Кольорова схема</label>
+      <select id="color-scheme">
+        <option value="default">Класичний</option>
+        <option value="fire">🔥 Вогонь</option>
+        <option value="ocean">🌊 Океан</option>
+        <option value="forest">🌲 Ліс</option>
+        <option value="lightgreen">🌿 Світло-зелений</option>
+        <option value="mint">🍃 М'ятна</option>
+        <option value="sunset">🌅 Захід</option>
+      </select>
+      <div id="scheme-preview" class="scheme-preview" aria-hidden="true"></div>
+    </div>
+
+    <div id="legend"></div>
+
+    <div id="status">Клікніть на карту для розрахунку</div>
+
+    <div class="export-actions">
+      <button id="btn-export" class="export-btn" disabled>⬇ Завантажити SVG</button>
+      <button id="btn-export-png" class="export-btn" disabled>⬇ Завантажити PNG</button>
+    </div>
+  </div>
+
+  <div id="loading" class="hidden">
+    <div class="spinner"></div>
+    <span id="loading-msg">Завантаження…</span>
+  </div>
+
+  <!-- CDN libs loaded as globals before app scripts -->
+  <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@latest/turf.min.js"></script>
+
+  <!-- App modules (IIFE namespaces, order matters) -->
+  <script src="js/colors.js"></script>
+  <script src="js/dijkstra.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/overpass.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
