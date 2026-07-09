@@ -128,5 +128,35 @@ const Renderer = (() => {
     }
   }
 
-  return { clearLayers, renderStreets, renderIsochrone };
+  const START_SOURCE = 'start-point';
+  const START_LAYER = 'start-point';
+
+  function showStartPoint(map, lng, lat) {
+    const data = {
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+    };
+    if (map.getSource(START_SOURCE)) {
+      map.getSource(START_SOURCE).setData(data);
+      if (map.getLayer(START_LAYER)) map.moveLayer(START_LAYER);
+      return;
+    }
+    map.addSource(START_SOURCE, { type: 'geojson', data });
+    map.addLayer({
+      id: START_LAYER,
+      type: 'circle',
+      source: START_SOURCE,
+      paint: {
+        'circle-radius': 8,
+        'circle-color': '#FFFFFF',
+      },
+    });
+  }
+
+  function clearStartPoint(map) {
+    try { if (map.getLayer(START_LAYER)) map.removeLayer(START_LAYER); } catch (_) {}
+    try { if (map.getSource(START_SOURCE)) map.removeSource(START_SOURCE); } catch (_) {}
+  }
+
+  return { clearLayers, renderStreets, renderIsochrone, showStartPoint, clearStartPoint };
 })();

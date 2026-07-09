@@ -32,7 +32,15 @@ const Export = (() => {
     return [x1, y1, x2, y2];
   }
 
-  function exportSVG(map, graph, distMap, maxTimeSec, vizMode) {
+  function _svgStartPoint(map, lon, lat, ppm, parts, bbox) {
+    const [x, y] = _pt(map, lon, lat);
+    const r = Math.max(5, 20 * ppm);
+    _extendBBox(bbox, x - r, y - r);
+    _extendBBox(bbox, x + r, y + r);
+    parts.push(`  <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="#FFFFFF"/>`);
+  }
+
+  function exportSVG(map, graph, distMap, maxTimeSec, vizMode, startLng, startLat) {
     const ppm = _pxPerMeter(map);
     const parts = [];
     const bbox = _bbox();
@@ -42,6 +50,11 @@ const Export = (() => {
       pad = _svgStreets(map, graph, distMap, maxTimeSec, parts, bbox);
     } else {
       pad = _svgIsochrone(map, graph, distMap, maxTimeSec, ppm, parts, bbox);
+    }
+
+    if (startLng != null && startLat != null) {
+      _svgStartPoint(map, startLng, startLat, ppm, parts, bbox);
+      pad = Math.max(pad, Math.max(5, 10 * ppm));
     }
 
     const w = map.getContainer().offsetWidth;

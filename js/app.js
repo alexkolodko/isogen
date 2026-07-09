@@ -3,49 +3,25 @@ let currentGraph = null;
 let currentDistMap = null;
 let currentMaxTimeSec = null;
 let currentVizMode = 'isochrone';
-let currentMarker = null;
 let currentLng = null;
 let currentLat = null;
 let runId = 0;
 
+// Custom vector styles (OpenFreeMap tiles; dark palette centered on #08013A)
+const STYLES = {
+  dark: 'styles/map-dark.json',
+  light: 'https://tiles.openfreemap.org/styles/liberty',
+};
+
 const map = new maplibregl.Map({
   container: 'map',
-  style: {
-    version: 8,
-    sources: {
-      carto: {
-        type: 'raster',
-        tiles: [
-          'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-          'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-          'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-        ],
-        tileSize: 256,
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com">CARTO</a>',
-        maxzoom: 19,
-      },
-    },
-    layers: [{ id: 'carto-tiles', type: 'raster', source: 'carto' }],
-  },
+  style: STYLES.dark,
   center: [30.52, 50.45],
   zoom: 13,
 });
 
 // Dark mode
 let isDarkMode = true;
-
-const TILES = {
-  light: [
-    'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-    'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-    'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-  ],
-  dark: [
-    'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-    'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-    'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-  ],
-};
 
 // UI refs
 const maxTimeSlider  = document.getElementById('max-time');
@@ -102,23 +78,14 @@ document.getElementById('btn-dark').addEventListener('click', () => {
   btn.title = isDarkMode ? 'Світла тема' : 'Темна тема';
   document.body.classList.toggle('dark', isDarkMode);
 
-  // Swap base map tiles (setStyle re-creates the base; custom layers restored after)
-  map.setStyle({
-    version: 8,
-    sources: {
-      carto: {
-        type: 'raster',
-        tiles: isDarkMode ? TILES.dark : TILES.light,
-        tileSize: 256,
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com">CARTO</a>',
-        maxzoom: 19,
-      },
-    },
-    layers: [{ id: 'carto-tiles', type: 'raster', source: 'carto' }],
-  });
+  // Swap vector basemap (setStyle re-creates the base; custom layers restored after)
+  map.setStyle(isDarkMode ? STYLES.dark : STYLES.light);
 
   // Re-render isochrone/streets layers once the new base style is ready
   map.once('styledata', () => {
+    if (currentLng != null && currentLat != null) {
+      Renderer.showStartPoint(map, currentLng, currentLat);
+    }
     if (currentGraph && currentDistMap) {
       void doRender(++runId, Math.round(currentMaxTimeSec / 60));
     }
@@ -154,7 +121,7 @@ function setExportEnabled(enabled) {
 
 btnExport.addEventListener('click', () => {
   if (!currentGraph || !currentDistMap) return;
-  const svg = Export.exportSVG(map, currentGraph, currentDistMap, currentMaxTimeSec, currentVizMode);
+  const svg = Export.exportSVG(map, currentGraph, currentDistMap, currentMaxTimeSec, currentVizMode, currentLng, currentLat);
   Export.download(svg, exportFilename('svg'));
 });
 
@@ -162,7 +129,7 @@ btnExportPng.addEventListener('click', async () => {
   if (!currentGraph || !currentDistMap) return;
   setExportEnabled(false);
   try {
-    const svg = Export.exportSVG(map, currentGraph, currentDistMap, currentMaxTimeSec, currentVizMode);
+    const svg = Export.exportSVG(map, currentGraph, currentDistMap, currentMaxTimeSec, currentVizMode, currentLng, currentLat);
     await Export.downloadPNG(svg, exportFilename('png'));
   } catch (err) {
     setStatus('Помилка експорту PNG: ' + err.message, true);
@@ -175,12 +142,7 @@ btnExportPng.addEventListener('click', async () => {
 map.on('click', e => {
   currentLng = e.lngLat.lng;
   currentLat = e.lngLat.lat;
-
-  if (currentMarker) currentMarker.remove();
-  currentMarker = new maplibregl.Marker({ color: '#FF4444' })
-    .setLngLat([currentLng, currentLat])
-    .addTo(map);
-
+  Renderer.showStartPoint(map, currentLng, currentLat);
   void runPipeline();
 });
 
@@ -256,6 +218,9 @@ async function doRender(thisId, maxTimeMin) {
       );
     }
     if (thisId !== runId) return;
+    if (currentLng != null && currentLat != null) {
+      Renderer.showStartPoint(map, currentLng, currentLat);
+    }
     buildLegend(maxTimeMin);
     setExportEnabled(true);
     setLoading(null);

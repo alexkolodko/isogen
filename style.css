@@ -16,6 +16,7 @@ html, body {
   position: absolute;
   inset: 0;
   cursor: crosshair;
+  background-color: #08013A;
 }
 
 /* Panel */

@@ -89,7 +89,7 @@ const Graph = (() => {
   }
 
   // Innermost band (start) → widest; each outer band one step narrower.
-  const WHITE_ROAD_WIDTHS = [5, 4, 3, 2, 1];
+  const WHITE_ROAD_WIDTHS = [8, 6, 5, 4, 3];
 
   function whiteRoadWidth(bandIdx) {
     return WHITE_ROAD_WIDTHS[Math.min(bandIdx, WHITE_ROAD_WIDTHS.length - 1)];
