@@ -118,7 +118,7 @@ const Renderer = (() => {
         type: 'FeatureCollection',
         features: whiteFeatures,
       }, 'line', {
-        'line-color': '#FFFFFF',
+        'line-color': Colors.roadColor(),
         'line-width': ['get', 'width'],
         'line-opacity': 0.92,
       }, {

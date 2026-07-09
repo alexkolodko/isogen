@@ -16,9 +16,9 @@ const map = new maplibregl.Map({
       carto: {
         type: 'raster',
         tiles: [
-          'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-          'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-          'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+          'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+          'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+          'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
         ],
         tileSize: 256,
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com">CARTO</a>',
@@ -32,7 +32,7 @@ const map = new maplibregl.Map({
 });
 
 // Dark mode
-let isDarkMode = false;
+let isDarkMode = true;
 
 const TILES = {
   light: [

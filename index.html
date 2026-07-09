@@ -7,14 +7,14 @@
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="dark">
 
   <div id="map"></div>
 
   <div id="panel">
     <div class="panel-header">
       <h2>Ізохрони</h2>
-      <button id="btn-dark" class="icon-btn" title="Темна тема">🌙</button>
+      <button id="btn-dark" class="icon-btn" title="Світла тема">☀️</button>
     </div>
 
     <div class="control-group">
@@ -45,20 +45,20 @@
       <label class="control-label">Фон палітри</label>
       <select id="color-background">
         <option value="light">Світлий</option>
-        <option value="dark">Темний</option>
+        <option value="dark" selected>Темний</option>
       </select>
     </div>
 
     <div class="control-group">
       <label class="control-label">Кольорова схема</label>
       <select id="color-scheme">
-        <option value="default">Класичний</option>
+        <option value="transport" selected>Транспортна</option>
         <option value="fire">🔥 Вогонь</option>
         <option value="ocean">🌊 Океан</option>
         <option value="forest">🌲 Ліс</option>
         <option value="lightgreen">🌿 Світло-зелений</option>
-        <option value="mint">🍃 М'ятна</option>
         <option value="sunset">🌅 Захід</option>
+        <option value="default">Нічне сяйво</option>
       </select>
       <div id="scheme-preview" class="scheme-preview" aria-hidden="true"></div>
     </div>

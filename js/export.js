@@ -128,7 +128,7 @@ const Export = (() => {
       }
     }
     if (whiteLines.length > 0) {
-      parts.push('  <g stroke="#FFFFFF" stroke-linecap="round" stroke-opacity="0.92" fill="none">');
+      parts.push(`  <g stroke="${Colors.roadColor()}" stroke-linecap="round" stroke-opacity="0.92" fill="none">`);
       parts.push(...whiteLines);
       parts.push('  </g>');
     }

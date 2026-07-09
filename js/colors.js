@@ -1,7 +1,7 @@
 const Colors = (() => {
   const SCHEMES = {
     default: {
-      name: 'Класичний',
+      name: 'Нічне сяйво',
       hue: [102, 34, 187],
       stops: [
         [0.00, [255, 255, 255]],
@@ -78,8 +78,8 @@ const Colors = (() => {
       ],
       bands: ['#F0FFF0', '#D4F5C8', '#A8E890', '#72C850', '#449928', '#2A6618'],
     },
-    mint: {
-      name: '🍃 М\'ятна',
+    transport: {
+      name: 'Транспортна',
       hue: [98, 190, 110],
       stops: [
         [0.00, [148, 215, 151]],
@@ -90,13 +90,23 @@ const Colors = (() => {
         [1.00, [  7,  55,  65]],
       ],
       bands: ['#94D797', '#7ACD82', '#62BE6E', '#3AAF53', '#24964A', '#073741'],
+      roadColor: '#9FF588',
+      lightStops: [
+        [0.00, [207, 255, 194]],
+        [0.20, [183, 253, 165]],
+        [0.40, [159, 245, 136]],
+        [0.60, [133, 237, 105]],
+        [0.80, [108, 229,  76]],
+        [1.00, [ 82, 196,  56]],
+      ],
+      lightBands: ['#CFFFC2', '#B7FDA5', '#9FF588', '#85ED69', '#6CE54C', '#52C438'],
     },
   };
 
   const LIGHT_STOPS = [0.00, 0.20, 0.40, 0.60, 0.80, 1.00];
 
-  let _schemeName = 'default';
-  let _background = 'light';
+  let _schemeName = 'transport';
+  let _background = 'dark';
 
   function rgbToHex([r, g, b]) {
     return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
@@ -120,6 +130,9 @@ const Colors = (() => {
     const scheme = SCHEMES[_schemeName];
     if (_background === 'dark') {
       return { stops: scheme.stops, bands: scheme.bands };
+    }
+    if (scheme.lightStops && scheme.lightBands) {
+      return { stops: scheme.lightStops, bands: scheme.lightBands };
     }
     return buildLightPalette(scheme.hue);
   }
@@ -150,10 +163,19 @@ const Colors = (() => {
     return rgbToHex(last);
   }
 
+  function roadColor() {
+    const scheme = SCHEMES[_schemeName];
+    if (_background === 'dark' && scheme.roadColor) {
+      return scheme.roadColor;
+    }
+    return '#FFFFFF';
+  }
+
   return {
     setScheme,
     setBackground,
     interpolateColor,
+    roadColor,
     get BANDS() {
       return activePalette().bands.map(color => ({ color }));
     },
