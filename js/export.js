@@ -34,7 +34,7 @@ const Export = (() => {
 
   function _svgStartPoint(map, lon, lat, ppm, parts, bbox) {
     const [x, y] = _pt(map, lon, lat);
-    const r = Math.max(5, 20 * ppm);
+    const r = 40 * ppm;
     _extendBBox(bbox, x - r, y - r);
     _extendBBox(bbox, x + r, y + r);
     parts.push(`  <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="#FFFFFF"/>`);

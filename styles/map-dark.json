@@ -1559,10 +1559,10 @@
         "text-transform": "uppercase"
       },
       "paint": {
-        "text-color": "rgba(80, 78, 78, 1)",
-        "text-halo-blur": 0,
-        "text-halo-color": "rgba(0, 0, 0, 1)",
-        "text-halo-width": 1,
+        "text-color": "#9080b8",
+        "text-halo-blur": 1,
+        "text-halo-color": "rgba(8, 1, 58, 0.9)",
+        "text-halo-width": 1.2,
         "text-translate": [
           0,
           0
@@ -1615,7 +1615,10 @@
         "text-size": 10
       },
       "paint": {
-        "text-color": "#7A6A9E",
+        "text-color": "#b090ff",
+        "text-halo-blur": 1,
+        "text-halo-color": "rgba(8, 1, 58, 0.9)",
+        "text-halo-width": 1.2,
         "text-translate": [
           0,
           2
