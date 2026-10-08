@@ -23,6 +23,32 @@ const Graph = (() => {
     },
   };
 
+  // Free-flow speeds ignore traffic lights and congestion
+  const DRIVE_TRAFFIC_FACTOR = 0.7;
+
+  function edgeSpeed(tags, mode) {
+    const hw = tags.highway;
+    if (mode !== 'drive') return SPEEDS[mode]?.[hw];
+    // *_link ramps take the parent class speed
+    const base = SPEEDS.drive[hw] ?? SPEEDS.drive[hw?.replace(/_link$/, '')];
+    if (!base) return undefined;
+    const maxspeed = parseInt(tags.maxspeed, 10);
+    const speed = maxspeed > 0 ? maxspeed / 3.6 : base;
+    return speed * DRIVE_TRAFFIC_FACTOR;
+  }
+
+  // 1 = forward only, -1 = backward only, 0 = both. Pedestrians ignore oneway.
+  function onewayDir(tags, mode) {
+    if (mode !== 'drive') return 0;
+    const o = tags.oneway;
+    if (o === '-1' || o === 'reverse') return -1;
+    if (o === 'yes' || o === '1' || o === 'true') return 1;
+    if (o === 'no') return 0;
+    if (tags.junction === 'roundabout' || tags.junction === 'circular') return 1;
+    if (tags.highway === 'motorway') return 1;
+    return 0;
+  }
+
   function haversine(lat1, lon1, lat2, lon2) {
     const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -40,10 +66,10 @@ const Graph = (() => {
 
     for (const way of ways) {
       const hw = way.tags?.highway;
-      const speed = SPEEDS[mode]?.[hw];
+      const speed = edgeSpeed(way.tags || {}, mode);
       if (!speed) continue;
 
-      const oneway = way.tags?.oneway === 'yes' || way.tags?.oneway === '1';
+      const dir = onewayDir(way.tags || {}, mode);
 
       for (let i = 0; i < way.nodes.length - 1; i++) {
         const aId = way.nodes[i];
@@ -59,8 +85,8 @@ const Graph = (() => {
         if (!adj.has(aId)) adj.set(aId, []);
         if (!adj.has(bId)) adj.set(bId, []);
 
-        adj.get(aId).push({ to: bId, time });
-        if (!oneway) adj.get(bId).push({ to: aId, time });
+        if (dir >= 0) adj.get(aId).push({ to: bId, time });
+        if (dir <= 0) adj.get(bId).push({ to: aId, time });
 
         edges.push({
           nodeA: aId,

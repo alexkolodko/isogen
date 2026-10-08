@@ -50,14 +50,24 @@ const Renderer = (() => {
     });
   }
 
+  // Isochrone half-width around each reachable edge, meters (matches SVG export)
+  const ISO_BUFFER_M = 90;
+
+  // Zoom-dependent line width (px) that stays `meters` wide on the ground
+  function _metersToLineWidth(map, meters) {
+    const lat = map.getCenter().lat;
+    const metersPerPxZ0 = 40075016.686 * Math.cos(lat * Math.PI / 180) / 512;
+    const w0 = meters / metersPerPxZ0;
+    return ['interpolate', ['exponential', 2], ['zoom'], 0, w0, 24, w0 * 2 ** 24];
+  }
+
   async function renderIsochrone(map, graph, distMap, maxTimeSec, onProgress, streetOverlay = null) {
-    const t = turf;
-    const BUFFER_KM = 0.09;
-    // Cumulative approach: band i fills all edges reachable within (i+1)/N * maxTime.
+    // Cumulative approach: band i strokes all edges reachable within (i+1)/N * maxTime.
     // Inner bands render last and paint over outer → clean concentric zones.
-    // Each band gets up to MAX_PER_BAND sampled edges (150 × ~0.6ms ≈ 90ms/band).
-    const MAX_PER_BAND = 150;
+    // Thick lines with a fixed ground width (same as SVG export) instead of buffered polygons,
+    // so large drive networks render every edge without sampling.
     const N = Colors.BANDS.length;
+    const bandWidth = _metersToLineWidth(map, ISO_BUFFER_M * 2);
 
     // Pre-sort all reachable edges by time
     const reachable = [];
@@ -81,27 +91,16 @@ const Renderer = (() => {
       if (onProgress) onProgress(i, N);
       await new Promise(r => setTimeout(r, 0));
 
-      // Spatially-even sample: pick every Nth index
-      const step = Math.max(1, Math.ceil(eligible.length / MAX_PER_BAND));
-      const sampled = eligible.filter((_, j) => j % step === 0).map(e => e.coords);
-
-      try {
-        const polygons = [];
-        for (const coords of sampled) {
-          try {
-            const buf = t.buffer(t.lineString(coords), BUFFER_KM, { units: 'kilometers', steps: 6 });
-            if (buf) polygons.push(buf);
-          } catch (_) {}
-        }
-        if (polygons.length === 0) continue;
-
-        _add(map, `iso-band-${i}`, t.featureCollection(polygons), 'fill', {
-          'fill-color': Colors.BANDS[i].color,
-          'fill-opacity': 0.88,
-        });
-      } catch (e) {
-        console.warn(`Band ${i} error:`, e);
-      }
+      _add(map, `iso-band-${i}`, {
+        type: 'Feature',
+        geometry: { type: 'MultiLineString', coordinates: eligible.map(e => e.coords) },
+      }, 'line', {
+        'line-color': Colors.BANDS[i].color,
+        'line-width': bandWidth,
+      }, {
+        'line-cap': 'round',
+        'line-join': 'round',
+      });
     }
 
     if (streetOverlay && reachable.length > 0) {

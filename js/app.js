@@ -2,6 +2,10 @@
 let currentGraph = null;
 let currentDistMap = null;
 let currentMaxTimeSec = null;
+// Road network was fetched for this time/mode; shorter times can reuse it
+let fetchedMaxTimeSec = null;
+let fetchedMode = null;
+let fetchedSource = null;
 let currentVizMode = 'isochrone';
 let currentLng = null;
 let currentLat = null;
@@ -10,7 +14,7 @@ let runId = 0;
 // Custom vector styles (OpenFreeMap tiles; dark palette centered on #08013A)
 const STYLES = {
   dark: 'styles/map-dark.json',
-  light: 'https://tiles.openfreemap.org/styles/liberty',
+  light: 'styles/map-light.json',
 };
 
 const map = new maplibregl.Map({
@@ -27,6 +31,7 @@ let isDarkMode = true;
 const maxTimeSlider  = document.getElementById('max-time');
 const maxTimeLabel   = document.getElementById('max-time-label');
 const travelMode     = document.getElementById('travel-mode');
+const dataSource     = document.getElementById('data-source');
 const btnStreets     = document.getElementById('btn-streets');
 const btnIsochrone   = document.getElementById('btn-isochrone');
 const chkStreetOverlay = document.getElementById('chk-street-overlay');
@@ -45,6 +50,16 @@ function updateLabel() {
   maxTimeLabel.textContent = maxTimeSlider.value + ' хв';
 }
 maxTimeSlider.addEventListener('input', updateLabel);
+maxTimeSlider.addEventListener('change', () => {
+  if (currentLng == null || currentLat == null) return;
+  const maxTimeSec = parseInt(maxTimeSlider.value) * 60;
+  if (currentGraph && fetchedMode === travelMode.value && fetchedSource === dataSource.value && maxTimeSec <= fetchedMaxTimeSec) {
+    currentMaxTimeSec = maxTimeSec;
+    void rerender();
+  } else {
+    void runPipeline();
+  }
+});
 updateLabel();
 
 travelMode.addEventListener('change', () => {
@@ -55,6 +70,11 @@ travelMode.addEventListener('change', () => {
     if (parseInt(maxTimeSlider.value) > 60) maxTimeSlider.value = 60;
   }
   updateLabel();
+  if (currentLng != null && currentLat != null) void runPipeline();
+});
+
+dataSource.addEventListener('change', () => {
+  if (currentLng != null && currentLat != null) void runPipeline();
 });
 
 btnStreets.addEventListener('click', () => {
@@ -171,6 +191,7 @@ async function runPipeline() {
   const thisId = ++runId;
   const maxTimeMin = parseInt(maxTimeSlider.value);
   const mode = travelMode.value;
+  const source = dataSource.value;
   const maxTimeSec = maxTimeMin * 60;
   const avgSpeed = mode === 'walk' ? 1.389 : 13.889;
   const radiusM = maxTimeSec * avgSpeed * 1.3;
@@ -183,7 +204,11 @@ async function runPipeline() {
 
   try {
     setLoading('Завантаження дорожньої мережі…');
-    const osmData = await Overpass.fetchRoadNetwork(currentLat, currentLng, radiusM, mode);
+    const osmData = source === 'tiles'
+      ? await Tiles.fetchRoadNetwork(currentLat, currentLng, radiusM, mode, (done, total) => {
+          if (thisId === runId) setLoading(`Завантаження тайлів ${done}/${total}…`);
+        })
+      : await Overpass.fetchRoadNetwork(currentLat, currentLng, radiusM, mode);
     if (thisId !== runId) return;
 
     setLoading('Побудова графу…');
@@ -204,6 +229,9 @@ async function runPipeline() {
     currentGraph = graph;
     currentDistMap = distMap;
     currentMaxTimeSec = maxTimeSec;
+    fetchedMaxTimeSec = maxTimeSec;
+    fetchedMode = mode;
+    fetchedSource = source;
 
     await doRender(thisId, maxTimeMin);
   } catch (err) {
@@ -217,8 +245,7 @@ async function runPipeline() {
 async function rerender() {
   if (!currentGraph || !currentDistMap) return;
   const thisId = ++runId;
-  const maxTimeMin = parseInt(maxTimeSlider.value);
-  await doRender(thisId, maxTimeMin);
+  await doRender(thisId, Math.round(currentMaxTimeSec / 60));
 }
 
 async function doRender(thisId, maxTimeMin) {

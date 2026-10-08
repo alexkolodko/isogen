@@ -1,7 +1,7 @@
 const Overpass = (() => {
   const HIGHWAY_FILTER = {
     walk: 'highway~"^(primary|secondary|tertiary|unclassified|residential|living_street|service|pedestrian|footway|cycleway|path|track)$"',
-    drive: 'highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service)$"',
+    drive: 'highway~"^(motorway|trunk|primary|secondary|tertiary)(_link)?$|^(unclassified|residential|living_street|service)$"][access!~"^(private|no)$"',
   };
 
   const ENDPOINTS = [
