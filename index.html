@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Генератор ізохрон</title>
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark">
@@ -78,9 +78,9 @@
     <span id="loading-msg">Завантаження…</span>
   </div>
 
-  <!-- CDN libs loaded as globals before app scripts -->
-  <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@latest/turf.min.js"></script>
+  <!-- MapLibre v5 keeps the UMD global; v6 is ESM-only and breaks script-tag loading -->
+  <script src="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
 
   <!-- App modules (IIFE namespaces, order matters) -->
   <script src="js/colors.js"></script>
