@@ -50,7 +50,7 @@ const Renderer = (() => {
     });
   }
 
-  async function renderIsochrone(map, graph, distMap, maxTimeSec, onProgress) {
+  async function renderIsochrone(map, graph, distMap, maxTimeSec, onProgress, streetOverlay = null) {
     const t = turf;
     const BUFFER_KM = 0.09;
     // Cumulative approach: band i fills all edges reachable within (i+1)/N * maxTime.
@@ -102,6 +102,19 @@ const Renderer = (() => {
       } catch (e) {
         console.warn(`Band ${i} error:`, e);
       }
+    }
+
+    if (streetOverlay && reachable.length > 0) {
+      _add(map, 'iso-street-overlay', {
+        type: 'FeatureCollection',
+        features: Graph.buildStreetOverlay(reachable, maxTimeSec, streetOverlay),
+      }, 'line', {
+        'line-color': Graph.STREET_OVERLAY_COLOR,
+        'line-width': ['get', 'width'],
+      }, {
+        'line-cap': 'round',
+        'line-join': 'round',
+      });
     }
 
     // White roads: grow from source per band — no detached segments from sampling

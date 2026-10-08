@@ -140,8 +140,40 @@ const Graph = (() => {
     return bands;
   }
 
+  // All reachable edges as overlay lines; width shrinks linearly with travel time.
+  const STREET_OVERLAY_COLOR = '#9FF588';
+  const STREET_OVERLAY_WIDTH = { max: 5, min: 1 };
+
+  const MAJOR_HIGHWAYS = new Set([
+    'motorway', 'motorway_link', 'trunk', 'trunk_link',
+    'primary', 'primary_link', 'secondary', 'secondary_link',
+    'tertiary', 'tertiary_link',
+  ]);
+
+  // detail: 'major' (main roads), 'roads' (no service/footpaths), 'all'
+  function matchesDetail(highway, detail) {
+    if (detail === 'major') return MAJOR_HIGHWAYS.has(highway);
+    if (detail === 'roads') return isRoadHighway(highway) && highway !== 'service';
+    return true;
+  }
+
+  function buildStreetOverlay(reachable, maxTimeSec, detail = 'all') {
+    const { max, min } = STREET_OVERLAY_WIDTH;
+    // Farthest first so thicker inner lines paint on top
+    return reachable
+      .filter(e => matchesDetail(e.highway, detail))
+      .sort((a, b) => b.edgeTime - a.edgeTime)
+      .map(e => ({
+        type: 'Feature',
+        properties: { width: +(max - (max - min) * (e.edgeTime / maxTimeSec)).toFixed(2) },
+        geometry: { type: 'LineString', coordinates: e.coords },
+      }));
+  }
+
   return {
     buildGraph,
+    buildStreetOverlay,
+    STREET_OVERLAY_COLOR,
     nearestNode,
     findSourceNode,
     isRoadHighway,

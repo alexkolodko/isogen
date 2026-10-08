@@ -40,7 +40,7 @@ const Export = (() => {
     parts.push(`  <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="#FFFFFF"/>`);
   }
 
-  function exportSVG(map, graph, distMap, maxTimeSec, vizMode, startLng, startLat) {
+  function exportSVG(map, graph, distMap, maxTimeSec, vizMode, startLng, startLat, streetOverlay = null) {
     const ppm = _pxPerMeter(map);
     const parts = [];
     const bbox = _bbox();
@@ -49,7 +49,7 @@ const Export = (() => {
     if (vizMode === 'streets') {
       pad = _svgStreets(map, graph, distMap, maxTimeSec, parts, bbox);
     } else {
-      pad = _svgIsochrone(map, graph, distMap, maxTimeSec, ppm, parts, bbox);
+      pad = _svgIsochrone(map, graph, distMap, maxTimeSec, ppm, parts, bbox, streetOverlay);
     }
 
     if (startLng != null && startLat != null) {
@@ -97,7 +97,7 @@ const Export = (() => {
     return strokeW / 2;
   }
 
-  function _svgIsochrone(map, graph, distMap, maxTimeSec, ppm, parts, bbox) {
+  function _svgIsochrone(map, graph, distMap, maxTimeSec, ppm, parts, bbox, streetOverlay) {
     // Use thick SVG strokes — same visual as Turf buffer but native SVG, scales to any size.
     const strokeW = Math.max(4, 90 * ppm * 2);
     const N = Colors.BANDS.length;
@@ -125,6 +125,16 @@ const Export = (() => {
       for (const { coords: [[lon1, lat1], [lon2, lat2]] } of eligible) {
         const [x1, y1, x2, y2] = _lineCoords(map, lon1, lat1, lon2, lat2, bbox);
         parts.push(`    <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
+      }
+      parts.push('  </g>');
+    }
+
+    if (streetOverlay && reachable.length > 0) {
+      parts.push(`  <g stroke="${Graph.STREET_OVERLAY_COLOR}" stroke-linecap="round" fill="none">`);
+      for (const feature of Graph.buildStreetOverlay(reachable, maxTimeSec, streetOverlay)) {
+        const [[lon1, lat1], [lon2, lat2]] = feature.geometry.coordinates;
+        const [x1, y1, x2, y2] = _lineCoords(map, lon1, lat1, lon2, lat2, bbox);
+        parts.push(`    <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${feature.properties.width}"/>`);
       }
       parts.push('  </g>');
     }

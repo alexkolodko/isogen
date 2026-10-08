@@ -29,6 +29,8 @@ const maxTimeLabel   = document.getElementById('max-time-label');
 const travelMode     = document.getElementById('travel-mode');
 const btnStreets     = document.getElementById('btn-streets');
 const btnIsochrone   = document.getElementById('btn-isochrone');
+const chkStreetOverlay = document.getElementById('chk-street-overlay');
+const streetDetail   = document.getElementById('street-detail');
 const colorScheme    = document.getElementById('color-scheme');
 const colorBackground = document.getElementById('color-background');
 const schemePreview  = document.getElementById('scheme-preview');
@@ -69,6 +71,25 @@ btnIsochrone.addEventListener('click', () => {
   btnIsochrone.classList.add('active');
   btnStreets.classList.remove('active');
   if (currentGraph) void rerender();
+});
+
+// Overlay detail level, or null when the overlay is off
+function streetOverlayDetail() {
+  return chkStreetOverlay.checked ? streetDetail.value : null;
+}
+
+function syncStreetDetail() {
+  streetDetail.hidden = !chkStreetOverlay.checked;
+}
+syncStreetDetail();
+
+chkStreetOverlay.addEventListener('change', () => {
+  syncStreetDetail();
+  if (currentGraph && currentVizMode === 'isochrone') void rerender();
+});
+
+streetDetail.addEventListener('change', () => {
+  if (currentGraph && currentVizMode === 'isochrone') void rerender();
 });
 
 document.getElementById('btn-dark').addEventListener('click', () => {
@@ -121,7 +142,7 @@ function setExportEnabled(enabled) {
 
 btnExport.addEventListener('click', () => {
   if (!currentGraph || !currentDistMap) return;
-  const svg = Export.exportSVG(map, currentGraph, currentDistMap, currentMaxTimeSec, currentVizMode, currentLng, currentLat);
+  const svg = Export.exportSVG(map, currentGraph, currentDistMap, currentMaxTimeSec, currentVizMode, currentLng, currentLat, streetOverlayDetail());
   Export.download(svg, exportFilename('svg'));
 });
 
@@ -129,7 +150,7 @@ btnExportPng.addEventListener('click', async () => {
   if (!currentGraph || !currentDistMap) return;
   setExportEnabled(false);
   try {
-    const svg = Export.exportSVG(map, currentGraph, currentDistMap, currentMaxTimeSec, currentVizMode, currentLng, currentLat);
+    const svg = Export.exportSVG(map, currentGraph, currentDistMap, currentMaxTimeSec, currentVizMode, currentLng, currentLat, streetOverlayDetail());
     await Export.downloadPNG(svg, exportFilename('png'));
   } catch (err) {
     setStatus('Помилка експорту PNG: ' + err.message, true);
@@ -214,7 +235,8 @@ async function doRender(thisId, maxTimeMin) {
           if (thisId === runId) {
             setLoading(`Відображення бенду ${total - bandIdx}/${total}…`);
           }
-        }
+        },
+        streetOverlayDetail()
       );
     }
     if (thisId !== runId) return;
